@@ -86,6 +86,16 @@ func LoadIndex(path string) (*VectorIndex, error) {
 	return &idx, nil
 }
 
+// ToDocuments 把索引条目还原成文档，供 BM25 等其他检索器消费。
+// 同一份块喂给两条检索路线，ID 才能对齐、RRF 才能融合。
+func (idx *VectorIndex) ToDocuments() []*schema.Document {
+	out := make([]*schema.Document, len(idx.Entries))
+	for i, e := range idx.Entries {
+		out[i] = &schema.Document{ID: e.ID, Content: e.Content, MetaData: e.MetaData}
+	}
+	return out
+}
+
 func ToFloat32(v []float64) []float32 {
 	out := make([]float32, len(v))
 	for i, x := range v {
