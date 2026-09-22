@@ -1,0 +1,12 @@
+[
+  {"question": "什么是 RAG？", "gold": ["01-rag.md#0"], "note": "开头的定义段（缩写问法）"},
+  {"question": "什么是检索增强生成？", "gold": ["01-rag.md#0"], "note": "同一块的全称问法"},
+  {"question": "BM25 是怎么工作的？", "gold": ["14-memory-retrieval.md#76"], "note": "发展历程里唯一提到 BM25 的块"},
+  {"question": "幻觉太多怎么办？", "gold": ["13-agent-llm-basics.md#82", "13-agent-llm-basics.md#83", "13-agent-llm-basics.md#84"], "note": "幻觉的定义/原因/缓解，三块都算对"},
+  {"question": "什么是向量数据库？", "gold": ["03-vector-database.md#0"], "note": "普通定义题"},
+  {"question": "什么是智能体？", "gold": ["12-agent-intro.md#1", "12-agent-intro.md#2"], "note": "定义+四要素与自主性，跨两块"},
+  {"question": "RAG 有哪些局限性？", "gold": ["01-rag.md#1", "01-rag.md#2"], "note": "RAG与LLM的局限性整节，跨两块"},
+  {"question": "切分文档时 chunk_size 和 chunk_overlap 是什么意思？", "gold": ["09-case-personal-kb.md#33", "06-knowledge-base.md#44"], "note": "两块各解释参数，跨文档"},
+  {"question": "RAG 和微调有什么区别？", "gold": ["05-llm-intro.md#45", "05-llm-intro.md#46", "05-llm-intro.md#47"], "note": "1.2.2 节引言+对比表，跨三块"},
+  {"question": "如何评估检索效果？", "gold": ["08-rag-iteration.md#81", "08-rag-iteration.md#82", "08-rag-iteration.md#83"], "note": "5.3.1 整节：准确率定义/三个不足/搜索任务建模"}
+]

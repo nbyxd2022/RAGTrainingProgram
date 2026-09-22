@@ -18,6 +18,7 @@ func main() {
 	q := flag.String("q", "", "问题")
 	k := flag.Int("k", 5, "最终展示条数")
 	n := flag.Int("n", 20, "每路召回的候选池大小（RRF 的输入）")
+	idxPath := flag.String("idx", ".data/vectors.gob", "索引文件路径（如 .data/idx-heading.gob）")
 	flag.Parse()
 	if *q == "" {
 		log.Fatal("用法：go run ./cmd/compare -q \"你的问题\" [-k 5] [-n 20]")
@@ -35,13 +36,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	idx, err := rag.LoadIndex(".data/vectors.gob")
+	idx, err := rag.LoadIndex(*idxPath)
 	if err != nil {
 		log.Fatalf("加载索引失败（先运行 go run ./cmd/index）：%v", err)
 	}
 
 	chunks := idx.ToDocuments()
-	fmt.Printf("问题：%s\n索引：%d 块（候选池 top-%d，展示 top-%d）\n\n", *q, len(chunks), *n, *k)
+	fmt.Printf("问题：%s\n索引：%s（%d 块，候选池 top-%d，展示 top-%d）\n\n", *q, *idxPath, len(chunks), *n, *k)
 
 	// 路线 1：纯向量。唯一要调 API、花钱、耗时在秒级的一步。
 	vr := &rag.MemoryRetriever{Index: idx, Embedder: embedder, TopK: *n}
