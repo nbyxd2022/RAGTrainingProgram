@@ -1,12 +1,398 @@
 [
-  {"question": "什么是 RAG？", "gold": ["01-rag.md#0"], "note": "开头的定义段（缩写问法）"},
-  {"question": "什么是检索增强生成？", "gold": ["01-rag.md#0"], "note": "同一块的全称问法"},
-  {"question": "BM25 是怎么工作的？", "gold": ["14-memory-retrieval.md#76"], "note": "发展历程里唯一提到 BM25 的块"},
-  {"question": "幻觉太多怎么办？", "gold": ["13-agent-llm-basics.md#82", "13-agent-llm-basics.md#83", "13-agent-llm-basics.md#84"], "note": "幻觉的定义/原因/缓解，三块都算对"},
-  {"question": "什么是向量数据库？", "gold": ["03-vector-database.md#0"], "note": "普通定义题"},
-  {"question": "什么是智能体？", "gold": ["12-agent-intro.md#1", "12-agent-intro.md#2"], "note": "定义+四要素与自主性，跨两块"},
-  {"question": "RAG 有哪些局限性？", "gold": ["01-rag.md#1", "01-rag.md#2"], "note": "RAG与LLM的局限性整节，跨两块"},
-  {"question": "切分文档时 chunk_size 和 chunk_overlap 是什么意思？", "gold": ["09-case-personal-kb.md#33", "06-knowledge-base.md#44"], "note": "两块各解释参数，跨文档"},
-  {"question": "RAG 和微调有什么区别？", "gold": ["05-llm-intro.md#45", "05-llm-intro.md#46", "05-llm-intro.md#47"], "note": "1.2.2 节引言+对比表，跨三块"},
-  {"question": "如何评估检索效果？", "gold": ["08-rag-iteration.md#81", "08-rag-iteration.md#82", "08-rag-iteration.md#83"], "note": "5.3.1 整节：准确率定义/三个不足/搜索任务建模"}
+  {
+    "question": "什么是 RAG？",
+    "tags": [
+      "字面"
+    ],
+    "gold": [
+      {
+        "doc": "01-rag.md",
+        "start": 10,
+        "end": 129,
+        "text": "檢索增強生成（英語：Retrieval-augmented generation，縮寫：RAG）是一種使大語言模型（LLM）能夠從外部數據源中檢索並整合新信息的技术。在RAG框架下，大语言模型首先查阅指定的文档集合，再对用户查询作出回应。"
+      }
+    ],
+    "note": "定义段（缩写问法）。旧 gold 含 H1 标题行 + 三段展开，全部剔除。"
+  },
+  {
+    "question": "什么是检索增强生成？",
+    "tags": [
+      "字面"
+    ],
+    "gold": [
+      {
+        "doc": "01-rag.md",
+        "start": 10,
+        "end": 129,
+        "text": "檢索增強生成（英語：Retrieval-augmented generation，縮寫：RAG）是一種使大語言模型（LLM）能夠從外部數據源中檢索並整合新信息的技术。在RAG框架下，大语言模型首先查阅指定的文档集合，再对用户查询作出回应。"
+      }
+    ],
+    "note": "同一答案的全称问法，测关键词变体（\"检索增强生成\"是 H1 标题里的词）。"
+  },
+  {
+    "question": "幻觉太多怎么办？",
+    "tags": [
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "13-agent-llm-basics.md",
+        "start": 37757,
+        "end": 38278,
+        "text": "为了提高大语言模型的可靠性，研究人员和开发者正在积极探索多种检测和缓解幻觉的方法：\n\n1. \u003cstrong\u003e数据层面\u003c/strong\u003e： 通过高质量数据清洗、引入事实性知识以及强化学习与人类反馈 (RLHF) 等方式\u003csup\u003e[13]\u003c/sup\u003e，从源头减少幻觉。\n2. \u003cstrong\u003e模型层面\u003c/strong\u003e： 探索新的模型架构，或让模型能够表达其对生成内容的不确定性。\n3. \u003cstrong\u003e推理与生成层面\u003c/strong\u003e：\n   1. \u003cstrong\u003e检索增强生成 (Retrieval-Augmented Generation, RAG)\u003c/strong\u003e \u003csup\u003e[14]\u003c/sup\u003e： 这是目前缓解幻觉的有效方法之一。RAG 系统通过在生成之前从外部知识库（如文档数据库、网页）中检索相关信息，然后将检索到的信息作为上下文，引导模型生成基于事实的回答。\n   2. \u003cstrong\u003e多步推理与验证\u003c/strong\u003e： 引导模型进行多步推理，并在每一步进行自我检查或外部验证。\n   3. \u003cstrong\u003e引入外部工具\u003c/strong\u003e： 允许模型调用外部工具（如搜索引擎、计算器、代码解释器）来获取实时信息或进行精确计算。"
+      }
+    ],
+    "note": "问\"怎么办\"，答在\"检测和缓解幻觉的方法\"清单。定义/类型/原因不计分（旧 gold 三块全算）。"
+  },
+  {
+    "question": "什么是向量数据库？",
+    "tags": [
+      "字面"
+    ],
+    "gold": [
+      {
+        "doc": "03-vector-database.md",
+        "start": 9,
+        "end": 160,
+        "text": "向量数据库（Vector database）、向量存储或向量搜索引擎是一种能够存储向量（固定长度的数值列表）及其他数据项的数据库。向量数据库通常实现一种或多种近似最近邻（Approximate Nearest Neighbor，ANN）算法，使用户可以使用查询向量搜索数据库，以检索最匹配的数据库记录。"
+      }
+    ],
+    "note": "定义句 + 工作机制句。旧 gold 含 H1 标题行。"
+  },
+  {
+    "question": "什么是智能体？",
+    "tags": [
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "12-agent-intro.md",
+        "start": 496,
+        "end": 678,
+        "text": "在人工智能领域，智能体被定义为任何能够通过\u003cstrong\u003e传感器（Sensors）\u003c/strong\u003e感知其所处\u003cstrong\u003e环境（Environment）\u003c/strong\u003e，并\u003cstrong\u003e自主\u003c/strong\u003e地通过\u003cstrong\u003e执行器（Actuators）\u003c/strong\u003e采取\u003cstrong\u003e行动（Action）\u003c/strong\u003e以达成特定目标的实体。"
+      }
+    ],
+    "note": "定义句（要素都在这句里）。四要素展开段不计分（问题没问要素）。"
+  },
+  {
+    "question": "RAG 有哪些局限性？",
+    "tags": [
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "01-rag.md",
+        "start": 708,
+        "end": 771,
+        "text": "RAG可用于预防此类错误，但并不能解决所有问题。例如，即使检索来源本身事实准确，若大语言模型误解了上下文，仍可能生成错误信息。"
+      }
+    ],
+    "note": "语料对\"局限性\"只给一条核心（误解上下文仍出错）。Google Bard / 奥巴马两个例子不计分。"
+  },
+  {
+    "question": "切分文档时 chunk_size 和 chunk_overlap 是什么意思？",
+    "tags": [
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "09-case-personal-kb.md",
+        "start": 14834,
+        "end": 14929,
+        "text": "- chunk_size 指每个块包含的字符或 Token（如单词、句子等）的数量\n- chunk_overlap 指两个块之间共享的字符数量，用于保持上下文的连贯性，避免分割丢失上下文信息"
+      }
+    ],
+    "note": "两行定义本身就是完整答案。06-knowledge-base.md 3.3.4 有等价表述（不计分）。"
+  },
+  {
+    "question": "RAG 和微调有什么区别？",
+    "tags": [
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "05-llm-intro.md",
+        "start": 20313,
+        "end": 20461,
+        "text": "开发 LLM 应用时，RAG 和微调（Fine-tuning）解决的问题不同。\n\n**RAG** 主要解决“回答时需要哪些外部知识”；**微调**是在特定数据上继续训练，主要调整模型的行为、风格、格式或专项任务能力。两者并不冲突，实际项目可以先用 RAG 提供知识，再用微调让模型更符合业务要求。"
+      }
+    ],
+    "note": "结论段（各自解决什么、是否冲突）。下方 12 行对比表是展开细节，不计分。"
+  },
+  {
+    "question": "如何评估检索效果？",
+    "tags": [
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "08-rag-iteration.md",
+        "start": 36570,
+        "end": 36845,
+        "text": "因此，检索部分的核心功能是找到存在于知识库中、能够正确回答用户 query 中的提问的文本段落。因此，我们可以定义一个最直观的准确率在评估检索效果：对于 N 个给定 query，我们保证每一个 query 对应的正确答案都存在于知识库中。假设对于每一个 query，系统找到了 K 个文本片段，如果正确答案在 K 个文本片段之一，那么我们认为检索成功；如果正确答案不在 K 个文本片段之一，我们任务检索失败。那么，系统的检索准确率可以被简单地计算为：\n\n$$accuracy = \\frac{M}{N}$$\n\n其中，M 是成功检索的 query 数。"
+      }
+    ],
+    "note": "最直观的准确率定义 + 公式。\"三个不足\"清单与\"搜索任务建模\"段不计分。"
+  },
+  {
+    "question": "RAG 的检索方式从早期的 TF-IDF/BM25 到现在经历了哪些变化？",
+    "tags": [
+      "多段",
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "14-memory-retrieval.md",
+        "start": 34569,
+        "end": 34665,
+        "text": "\u003cstrong\u003e检索方式\u003c/strong\u003e：主要依赖传统的关键词匹配算法，如`TF-IDF`或`BM25`。这些方法计算词频和文档频率来评估相关性，对字面匹配效果好，但难以理解语义上的相似性。"
+      },
+      {
+        "doc": "14-memory-retrieval.md",
+        "start": 34826,
+        "end": 34935,
+        "text": "\u003cstrong\u003e检索方式\u003c/strong\u003e：转向基于\u003cstrong\u003e稠密嵌入（Dense Embedding）\u003c/strong\u003e的语义检索。通过将文本转换为高维向量，模型能够理解和匹配语义上的相似性，而不仅仅是关键词。"
+      },
+      {
+        "doc": "14-memory-retrieval.md",
+        "start": 35100,
+        "end": 35143,
+        "text": "\u003cstrong\u003e检索方式\u003c/strong\u003e：如混合检索，多查询扩展，假设性文档嵌入等。"
+      }
+    ],
+    "note": "替代旧题\"BM25 是怎么工作的\"（语料只有词频/文档频率这一层粒度，答不了\"怎么工作\"）。三段答案在同一节里不相邻，测多段召回。"
+  },
+  {
+    "question": "为什么要把长文档分割成多个 chunk？",
+    "tags": [
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "06-knowledge-base.md",
+        "start": 18710,
+        "end": 18842,
+        "text": "由于单个文档的长度往往会超过模型支持的上下文，导致检索得到的知识太长超出模型的处理能力，因此，在构建向量知识库的过程中，我们往往需要对文档进行分割，将单个文档按长度或者按固定的规则分割成若干个 chunk，然后将每个 chunk 转化为词向量，存储到向量数据库中。"
+      }
+    ],
+    "note": "因果句（上下文超限 → 必须分割 → 向量化入库）。下一段\"检索以 chunk 为元单位\"是补充，不计分。"
+  },
+  {
+    "question": "GPT-5.6 系列有哪些型号？各自的上下文长度是多少？",
+    "tags": [
+      "表格",
+      "字面"
+    ],
+    "gold": [
+      {
+        "doc": "05-llm-intro.md",
+        "start": 2819,
+        "end": 2873,
+        "text": "| GPT-5.6 Sol | 1.05M | 2026-02-16 | 高难度推理、复杂编码和长工具链 |"
+      },
+      {
+        "doc": "05-llm-intro.md",
+        "start": 2874,
+        "end": 2931,
+        "text": "| GPT-5.6 Terra | 1.05M | 2026-02-16 | 能力、延迟和成本较均衡的生产任务 |"
+      },
+      {
+        "doc": "05-llm-intro.md",
+        "start": 2932,
+        "end": 2987,
+        "text": "| GPT-5.6 Luna | 1.05M | 2026-02-16 | 成本敏感的批量处理和高吞吐调用 |"
+      }
+    ],
+    "note": "答案只在表格里（3 行数据行）。表头不计分——10 张模型表表头一模一样，算进去会把任意一张表都算对。"
+  },
+  {
+    "question": "在 RAG 里，用向量有什么优势？",
+    "tags": [
+      "多段",
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "06-knowledge-base.md",
+        "start": 699,
+        "end": 862,
+        "text": "* 向量比文字更适合检索。当我们在数据库检索时，如果数据库存储的是文字，主要通过检索关键词（词法搜索）等方法找到相对匹配的数据，匹配的程度取决于数据库中的文档中是否含有查询句中的关键词；而向量中包含了原文本的语义信息，可以通过计算问题与数据库中数据的点积、余弦距离、欧几里得距离等指标，直接获取问题与数据在语义层面上的相似度；"
+      },
+      {
+        "doc": "06-knowledge-base.md",
+        "start": 863,
+        "end": 964,
+        "text": "* 向量比其它媒介的综合信息能力更强，当传统数据库存储文字、声音、图像、视频等多种媒介时，很难去将上述多种媒介构建起关联与跨模态的查询方法；但是向量却可以通过多种向量模型将多种数据映射成统一的向量形式。"
+      }
+    ],
+    "note": "两条优势各一段。第一条把\"向量 vs 关键词（词法搜索）\"讲透，第二条讲多模态。"
+  },
+  {
+    "question": "用 Eino 怎么快速搭一个带工具的智能体？",
+    "tags": [
+      "代码",
+      "字面"
+    ],
+    "gold": [
+      {
+        "doc": "17-eino-readme.md",
+        "start": 1527,
+        "end": 1970,
+        "text": "chatModel, _ := openai.NewChatModel(ctx, \u0026openai.ChatModelConfig{\n    Model:  \"gpt-4o\",\n    APIKey: os.Getenv(\"OPENAI_API_KEY\"),\n})\n\nagent, _ := adk.NewChatModelAgent(ctx, \u0026adk.ChatModelAgentConfig{\n    Model: chatModel,\n})\n\nrunner := adk.NewRunner(ctx, adk.RunnerConfig{Agent: agent})\niter := runner.Query(ctx, \"Hello, who are you?\")\nfor {\n    event, ok := iter.Next()\n    if !ok {\n        break\n    }\n    fmt.Println(event.Message.Content)\n}"
+      },
+      {
+        "doc": "17-eino-readme.md",
+        "start": 1997,
+        "end": 2254,
+        "text": "agent, _ := adk.NewChatModelAgent(ctx, \u0026adk.ChatModelAgentConfig{\n    Model: chatModel,\n    ToolsConfig: adk.ToolsConfig{\n        ToolsNodeConfig: compose.ToolsNodeConfig{\n            Tools: []tool.BaseTool{weatherTool, calculatorTool},\n        },\n    },\n})"
+      }
+    ],
+    "note": "答案就是两段 Go 代码（含缩进与符号）。测代码块整块保留：固定切块会把代码拦腰截断。"
+  },
+  {
+    "question": "Workflow 和 Agent 的本质区别是什么？",
+    "tags": [
+      "多段",
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "12-agent-intro.md",
+        "start": 22902,
+        "end": 22976,
+        "text": "简单来说，\u003cstrong\u003eWorkflow 是让 AI 按部就班地执行指令，而 Agent 则是赋予 AI 自由度去自主达成目标。\u003c/strong\u003e"
+      },
+      {
+        "doc": "12-agent-intro.md",
+        "start": 23191,
+        "end": 23301,
+        "text": "如图 1.6 所示，工作流是一种传统的自动化范式，其核心是\u003cstrong\u003e对一系列任务或步骤进行预先定义的、结构化的编排\u003c/strong\u003e。它本质上是一个精确的、静态的流程图，规定了在何种条件下、以何种顺序执行哪些操作。"
+      },
+      {
+        "doc": "12-agent-intro.md",
+        "start": 23440,
+        "end": 23567,
+        "text": "与工作流不同，基于大型语言模型的智能体是一个\u003cstrong\u003e具备自主性的、以目标为导向的系统\u003c/strong\u003e。它不仅仅是执行预设指令，而是能够在一定程度上理解环境、进行推理、制定计划，并动态地采取行动以达成最终目标。LLM 在其中扮演着“大脑”的角色。"
+      }
+    ],
+    "note": "结论句 + 两侧定义。报销审批 / 旅行助手例子不计分。"
+  },
+  {
+    "question": "模型幻觉有哪几种类型？",
+    "tags": [
+      "字面",
+      "多段"
+    ],
+    "gold": [
+      {
+        "doc": "13-agent-llm-basics.md",
+        "start": 37150,
+        "end": 37380,
+        "text": "- \u003cstrong\u003e事实性幻觉 (Factual Hallucinations)\u003c/strong\u003e ： 模型生成与现实世界事实不符的信息。\n- \u003cstrong\u003e忠实性幻觉 (Faithfulness Hallucinations)\u003c/strong\u003e ： 在文本摘要、翻译等任务中，生成的内容未能忠实地反映源文本的含义。\n- \u003cstrong\u003e内在幻觉 (Intrinsic Hallucinations)\u003c/strong\u003e ： 模型生成的内容与输入信息直接矛盾。"
+      }
+    ],
+    "note": "三条类型名是固定术语，在同一份清单里。"
+  },
+  {
+    "question": "人类记忆分为哪几个层次？",
+    "tags": [
+      "字面",
+      "多段"
+    ],
+    "gold": [
+      {
+        "doc": "14-memory-retrieval.md",
+        "start": 775,
+        "end": 1001,
+        "text": "1. \u003cstrong\u003e感觉记忆（Sensory Memory）\u003c/strong\u003e：持续时间极短（0.5-3秒），容量巨大，负责暂时保存感官接收到的所有信息\n2. \u003cstrong\u003e工作记忆（Working Memory）\u003c/strong\u003e：持续时间短（15-30秒），容量有限（7±2个项目），负责当前任务的信息处理\n3. \u003cstrong\u003e长期记忆（Long-term Memory）\u003c/strong\u003e：持续时间长（可达终生），容量几乎无限，进一步分为："
+      }
+    ],
+    "note": "三层记忆（感觉/工作/长期），长期记忆的子分类（程序性/陈述性等）不计分。"
+  },
+  {
+    "question": "有效的上下文由哪些组件构成？",
+    "tags": [
+      "多段",
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "15-context-engineering.md",
+        "start": 3021,
+        "end": 3084,
+        "text": "- \u003cstrong\u003e系统提示（System Prompt）\u003c/strong\u003e：语言清晰、直白，信息层级把握在“刚刚好”的高度。"
+      },
+      {
+        "doc": "15-context-engineering.md",
+        "start": 3387,
+        "end": 3489,
+        "text": "- \u003cstrong\u003e工具（Tools）\u003c/strong\u003e：工具定义了智能体与信息/行动空间的契约，必须促进效率：既要返回\u003cstrong\u003etoken 友好\u003c/strong\u003e的信息，又要鼓励高效的智能体行为。"
+      },
+      {
+        "doc": "15-context-engineering.md",
+        "start": 3697,
+        "end": 3762,
+        "text": "- \u003cstrong\u003e示例（Few-shot）\u003c/strong\u003e：始终推荐提供示例，但不建议把“所有边界条件”的罗列一股脑塞进提示。"
+      }
+    ],
+    "note": "三个组件各取首句（名字 + 一句话定位）。各组件下的细则不计分。"
+  },
+  {
+    "question": "ReAct 的工作模式是什么？",
+    "tags": [
+      "多段",
+      "字面"
+    ],
+    "gold": [
+      {
+        "doc": "16-agent-paradigms.md",
+        "start": 4607,
+        "end": 4849,
+        "text": "- \u003cstrong\u003eThought (思考)：\u003c/strong\u003e 这是智能体的“内心独白”。它会分析当前情况、分解任务、制定下一步计划，或者反思上一步的结果。\n- \u003cstrong\u003eAction (行动)：\u003c/strong\u003e 这是智能体决定采取的具体动作，通常是调用一个外部工具，例如 `Search['华为最新款手机']`。\n- \u003cstrong\u003eObservation (观察)：\u003c/strong\u003e 这是执行`Action`后从外部工具返回的结果，例如搜索结果的摘要或API的返回值。"
+      },
+      {
+        "doc": "16-agent-paradigms.md",
+        "start": 4851,
+        "end": 4978,
+        "text": "智能体将不断重复这个 \u003cstrong\u003eThought -\u003e Action -\u003e Observation\u003c/strong\u003e 的循环，将新的观察结果追加到历史记录中，形成一个不断增长的上下文，直到它在`Thought`中认为已经找到了最终答案，然后输出结果。"
+      }
+    ],
+    "note": "三要素定义 + 循环句。形式化公式、适用场景清单、流程图不计分。"
+  },
+  {
+    "question": "编写清晰、具体的提示要注意什么？",
+    "tags": [
+      "语义"
+    ],
+    "gold": [
+      {
+        "doc": "11-prompt-guidelines.md",
+        "start": 474,
+        "end": 626,
+        "text": "在与语言模型交互时，您需要牢记一点:以**清晰、具体**的方式表达您的需求。假设您面前坐着一位来自外星球的新朋友，其对人类语言和常识都一无所知。在这种情况下，您需要把想表达的意图讲得非常明确，不要有任何歧义。同样的，在提供 Prompt 的时候，也要以足够详细和容易理解的方式，把您的需求与上下文说清楚。"
+      },
+      {
+        "doc": "11-prompt-guidelines.md",
+        "start": 629,
+        "end": 756,
+        "text": "并不是说 Prompt 就必须非常短小简洁。事实上，在许多情况下，更长、更复杂的 Prompt 反而会让语言模型更容易抓住关键点，给出符合预期的回复。原因在于，复杂的 Prompt 提供了更丰富的上下文和细节，让模型可以更准确地把握所需的操作和响应方式。"
+      }
+    ],
+    "note": "原则核心两句（要讲明确、长提示未必差）。"
+  },
+  {
+    "question": "什么是词向量？",
+    "tags": [
+      "字面"
+    ],
+    "gold": [
+      {
+        "doc": "06-knowledge-base.md",
+        "start": 95,
+        "end": 213,
+        "text": "在机器学习和自然语言处理（NLP）中，词向量（word embedding）是一种以单词为单位将每个单词转化为实数向量的技术。这些实数向量可以被计算机更好地理解和处理。词向量背后的主要想理念是相似或相关的对象在向量空间中的距离应该很近。"
+      }
+    ],
+    "note": "定义段前三句（含语料原文的笔误\"主要想理念\"）。"
+  }
 ]

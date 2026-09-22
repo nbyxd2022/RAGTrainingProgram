@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -17,9 +18,9 @@ import (
 
 const testsetPath = "eval/testset.json"
 
-// rulerPath 是"基准坐标系"：测试集里的 gold 块 ID 来自它（定长 500/50）。
-// 换切块策略后块 ID 全变，靠基准索引把 gold 翻译成源文档字符区间，才能跨策略比较。
-const rulerPath = ".data/idx-500-50.gob"
+// kLadder 覆盖率报告的 k 阶梯：@1 只看头名块（天然排名敏感，取代单独的 MRR 一列），
+// @20 看深池（候选池上限），中间三档观察"多带回一点"的边际收益。
+var kLadder = [5]int{1, 3, 5, 10, 20}
 
 type strategy struct {
 	name string
@@ -35,15 +36,13 @@ var strategies = []strategy{
 }
 
 type acc struct {
-	raw, adj [3]float64 // cov@5/10/20；adj 是扣掉"该策略不可达区域"后的校正值
+	raw, adj [5]float64 // 与 kLadder 对齐；adj 是扣掉"该策略不可达区域"后的校正值
 }
 
 type row struct {
-	name    string
-	chunks  int
-	cov     map[string]*acc // 检索路线 → 累计值
-	old     [4]float64      // 基准策略额外算：recall@5/10/20 + RR（2A 的老尺子）
-	isRuler bool
+	name   string
+	chunks int
+	cov    map[string]*acc // 检索路线 → 累计值
 }
 
 func main() {
@@ -65,18 +64,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ruler, err := rag.LoadIndex(rulerPath)
-	if err != nil {
-		log.Fatalf("加载基准索引失败（先构建）：go run ./cmd/index -strategy fixed -size 500 -overlap 50 -out %s\n%v", rulerPath, err)
-	}
-	if err := requireSpanMeta(ruler, "基准索引"); err != nil {
-		log.Fatal(err)
-	}
-	goldSpans, goldSummary, err := buildGoldSpans(ruler, cases)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	docs, err := rag.LoadCorpus(ctx, "corpus")
 	if err != nil {
 		log.Fatal(err)
@@ -85,11 +72,10 @@ func main() {
 	for _, d := range docs {
 		docLens[d.ID] = utf8.RuneCountInString(d.Content)
 	}
-
-	fmt.Printf("测试集：%s（%d 题）｜ gold 共 %s ｜ 基准坐标系：%s\n", testsetPath, len(cases), goldSummary, rulerPath)
-	fmt.Printf("指标：coverage@k = 前 k 条命中的字符区间并集 ∩ gold 区间并集 的字符占比（与切块策略解耦）\n")
-	fmt.Printf("      校正 = 扣掉该策略本身检索不到的区域之后的比例（按标题策略的标题行不在任何块的正文区间里）\n")
-	fmt.Printf("候选池：每题 top-20（向量 / BM25 / RRF 三路各自算）\n\n")
+	if err := verifyGold(cases, docs); err != nil {
+		log.Fatal(err)
+	}
+	printHeader(cases)
 
 	var rows []row
 	for _, st := range strategies {
@@ -108,9 +94,8 @@ func main() {
 		chunks := idx.ToDocuments()
 		bm := rag.BuildBM25(chunks)
 		vr := &rag.MemoryRetriever{Index: idx, Embedder: embedder, TopK: 20}
-		isRuler := st.path == rulerPath
 
-		r := row{name: st.name, chunks: len(chunks), isRuler: isRuler,
+		r := row{name: st.name, chunks: len(chunks),
 			cov: map[string]*acc{"向量": {}, "BM25": {}, "RRF": {}}}
 
 		unreach, err := unreachableRegions(idx, docLens)
@@ -132,37 +117,30 @@ func main() {
 				docs []*schema.Document
 			}{{"向量", vecDocs}, {"BM25", bmDocs}, {"RRF", fused}}
 
-			goldUnion := eval.UnionLen(goldSpans[i])
-			ceiling := goldUnion - eval.IntersectLen(goldSpans[i], unreach)
-			goldLine := goldDesc(goldSpans[i])
+			gold := c.Spans()
+			goldUnion := eval.UnionLen(gold)
+			ceiling := goldUnion - eval.IntersectLen(gold, unreach)
+			goldLine := goldDesc(c)
 			if ceiling < goldUnion {
 				goldLine += fmt.Sprintf("｜本策略可达 %.0f%%", 100*float64(ceiling)/float64(goldUnion))
 			}
 
-			fmt.Printf("[%d] %s\n    gold：%s\n", i+1, c.Question, goldLine)
+			fmt.Printf("[%d] %s  [%s]\n    gold：%s\n", i+1, c.Question, strings.Join(c.Tags, "/"), goldLine)
 			for _, rt := range routes {
 				spans, err := spansOf(rt.docs)
 				if err != nil {
 					log.Fatal(err)
 				}
-				vals := []float64{
-					eval.CoverageAtK(spans, goldSpans[i], 5),
-					eval.CoverageAtK(spans, goldSpans[i], 10),
-					eval.CoverageAtK(spans, goldSpans[i], 20),
+				vals := make([]float64, len(kLadder))
+				for j, k := range kLadder {
+					vals[j] = eval.CoverageAtK(spans, gold, k)
 				}
 				a := r.cov[rt.name]
 				for j, v := range vals {
 					a.raw[j] += v
 					a.adj[j] += norm(v, goldUnion, ceiling)
 				}
-				fmt.Printf("      %-4s cov@5=%.2f  cov@10=%.2f  cov@20=%.2f\n", rt.name, vals[0], vals[1], vals[2])
-			}
-			if isRuler {
-				ids := idsOf(vecDocs)
-				r.old[0] += eval.RecallAtK(ids, c.Gold, 5)
-				r.old[1] += eval.RecallAtK(ids, c.Gold, 10)
-				r.old[2] += eval.RecallAtK(ids, c.Gold, 20)
-				r.old[3] += eval.ReciprocalRank(ids, c.Gold)
+				fmt.Printf("      %-4s %s\n", rt.name, ladder(vals))
 			}
 			fmt.Println()
 		}
@@ -173,23 +151,113 @@ func main() {
 	}
 
 	n := float64(len(cases))
-	fmt.Println("──────── 汇总（平均）────────")
-	fmt.Printf("%-14s %-5s cov@5   cov@10  cov@20 │ 校正@5  校正@10 校正@20\n", "策略", "路线")
+	fmt.Println("──────── 汇总（每题先算值，再按题 macro 平均）────────")
+	printTable("覆盖率 cov@k（原始）", rows, n, func(a *acc) [5]float64 { return a.raw })
+	printTable("覆盖率 校正@k（扣掉该策略不可达区域后）", rows, n, func(a *acc) [5]float64 { return a.adj })
+	fmt.Printf("\n（每题每策略 1 次向量 API 调用，本次共 %d 次）\n", len(cases)*len(rows))
+}
+
+// printHeader 打测试集体检表：题量、gold 段数/字数、标签分布。
+func printHeader(cases []eval.TestCase) {
+	segs, union, multi := 0, 0, 0
+	tags := map[string]int{}
+	for _, c := range cases {
+		segs += len(c.Gold)
+		union += c.GoldChars()
+		if len(c.Gold) > 1 {
+			multi++
+		}
+		for _, t := range c.Tags {
+			tags[t]++
+		}
+	}
+	fmt.Printf("测试集：%s（%d 题 / %d 段 gold / 并集 %d 字 / 平均每题 %d 字 / 多段题 %d 道）\n",
+		testsetPath, len(cases), segs, union, union/len(cases), multi)
+	fmt.Printf("标签：%s\n", tagLine(tags))
+	fmt.Printf("指标：coverage@k = 前 k 条命中的字符区间并集 ∩ gold 区间并集 的字符占比（与切块策略解耦）\n")
+	fmt.Printf("      k 阶梯 %v；cov@1 只看头名块，排名敏感（取代单独的 MRR 列）\n", kLadder)
+	fmt.Printf("      校正 = 扣掉该策略本身检索不到的区域之后的比例（按标题策略的标题行不在任何块的正文区间里）\n")
+	fmt.Printf("候选池：每题 top-20（向量 / BM25 / RRF 三路各自算）\n\n")
+}
+
+// tagLine 把标签计数印成 "字面×8  多段×5  …"（按标签名排序，读数稳定）。
+func tagLine(tags map[string]int) string {
+	names := make([]string, 0, len(tags))
+	for t := range tags {
+		names = append(names, t)
+	}
+	sort.Strings(names)
+	parts := make([]string, len(names))
+	for i, t := range names {
+		parts[i] = fmt.Sprintf("%s×%d", t, tags[t])
+	}
+	return strings.Join(parts, "  ")
+}
+
+// printTable 每个策略 × 每条路线一行，k 阶梯作列（值都已按题数平均）。
+func printTable(title string, rows []row, n float64, pick func(*acc) [5]float64) {
+	fmt.Printf("\n──────── %s ────────\n", title)
+	fmt.Printf("%-18s %-5s", "策略", "路线")
+	for _, k := range kLadder {
+		fmt.Printf("  @%-5d", k)
+	}
+	fmt.Println()
 	for _, r := range rows {
 		for _, name := range []string{"向量", "BM25", "RRF"} {
-			a := r.cov[name]
-			fmt.Printf("%-14s %-5s %.3f   %.3f   %.3f   │ %.3f   %.3f   %.3f\n",
-				fmt.Sprintf("%s(%d块)", r.name, r.chunks), name,
-				a.raw[0]/n, a.raw[1]/n, a.raw[2]/n, a.adj[0]/n, a.adj[1]/n, a.adj[2]/n)
+			v := pick(r.cov[name])
+			fmt.Printf("%-18s %-5s", fmt.Sprintf("%s(%d块)", r.name, r.chunks), name)
+			for _, x := range v {
+				fmt.Printf("  %.3f  ", x/n)
+			}
+			fmt.Println()
 		}
 	}
-	for _, r := range rows {
-		if r.isRuler {
-			fmt.Printf("\n脚注：%s 用块 ID 老尺子复核（2A 口径，向量路）：recall@5=%.3f  recall@10=%.3f  recall@20=%.3f  MRR=%.3f\n",
-				r.name, r.old[0]/n, r.old[1]/n, r.old[2]/n, r.old[3]/n)
+}
+
+// ladder 把一题的 k 阶梯覆盖印成一行。
+func ladder(vals []float64) string {
+	parts := make([]string, len(kLadder))
+	for i, k := range kLadder {
+		parts[i] = fmt.Sprintf("cov@%d=%.2f", k, vals[i])
+	}
+	return strings.Join(parts, "  ")
+}
+
+// verifyGold 体检：gold 的 [start,end) 必须落在语料里，且切片内容与标注原文逐字一致。
+// 标注 spec → JSON → 评测三环之间，这里是唯一的自动保险（防语料/标注漂移）。
+func verifyGold(cases []eval.TestCase, docs []*schema.Document) error {
+	byID := make(map[string]string, len(docs))
+	for _, d := range docs {
+		byID[d.ID] = d.Content
+	}
+	for i, c := range cases {
+		for j, g := range c.Gold {
+			content, ok := byID[g.Doc]
+			if !ok {
+				return fmt.Errorf("第 %d 题（%s）第 %d 段 gold 指向语料外的文档 %s", i+1, c.Question, j+1, g.Doc)
+			}
+			r := []rune(content)
+			if g.Start < 0 || g.End > len(r) || g.End <= g.Start {
+				return fmt.Errorf("第 %d 题（%s）第 %d 段 gold 区间 [%d,%d) 越界（%s 全长 %d 字）",
+					i+1, c.Question, j+1, g.Start, g.End, g.Doc, len(r))
+			}
+			if got := string(r[g.Start:g.End]); got != g.Text {
+				return fmt.Errorf("第 %d 题（%s）第 %d 段 gold 与语料不一致：\n  语料：%s\n  标注：%s",
+					i+1, c.Question, j+1, preview(got, 60), preview(g.Text, 60))
+			}
 		}
 	}
-	fmt.Printf("\n（每题每策略 1 次向量 API 调用，本次共 %d 次）\n", len(cases)*len(rows))
+	return nil
+}
+
+// preview 截断长文本用于报错信息（换行显示为 \n，避免把一行报错撑成十行）。
+func preview(s string, maxRunes int) string {
+	s = strings.ReplaceAll(s, "\n", "\\n")
+	r := []rune(s)
+	if len(r) <= maxRunes {
+		return s
+	}
+	return string(r[:maxRunes]) + "…"
 }
 
 // requireSpanMeta 拦住 2B 之前建的旧索引：没有 start/end 就没法算覆盖率。
@@ -201,34 +269,6 @@ func requireSpanMeta(idx *rag.VectorIndex, name string) error {
 		return fmt.Errorf("%s 的块缺 start/end 元数据（2B 之前建的旧索引），请用 go run ./cmd/index 重建", name)
 	}
 	return nil
-}
-
-// buildGoldSpans 把测试集里的 gold 块 ID（基准坐标系）翻译成源文档字符区间。
-func buildGoldSpans(ruler *rag.VectorIndex, cases []eval.TestCase) ([][]eval.Span, string, error) {
-	byID := make(map[string]rag.IndexEntry, len(ruler.Entries))
-	for _, e := range ruler.Entries {
-		byID[e.ID] = e
-	}
-	out := make([][]eval.Span, len(cases))
-	segs, total := 0, 0
-	for i, c := range cases {
-		for _, id := range c.Gold {
-			e, ok := byID[id]
-			if !ok {
-				return nil, "", fmt.Errorf("第 %d 题 gold 块 %s 不在基准索引里（gold 与基准坐标系不同步）", i+1, id)
-			}
-			doc, _ := e.MetaData["doc"].(string)
-			s, ok1 := metaInt(e.MetaData, "start")
-			en, ok2 := metaInt(e.MetaData, "end")
-			if doc == "" || !ok1 || !ok2 {
-				return nil, "", fmt.Errorf("第 %d 题 gold 块 %s 缺 doc/start/end 元数据", i+1, id)
-			}
-			out[i] = append(out[i], eval.Span{Doc: doc, Start: s, End: en})
-			segs++
-		}
-		total += eval.UnionLen(out[i])
-	}
-	return out, fmt.Sprintf("%d 段 / 并集 %d 字", segs, total), nil
 }
 
 // unreachableRegions 算出某策略在每篇文档里"任何块都覆盖不到"的字符区间：
@@ -299,22 +339,15 @@ func metaInt(m map[string]any, key string) (int, bool) {
 	return 0, false
 }
 
-func idsOf(docs []*schema.Document) []string {
-	out := make([]string, len(docs))
-	for i, d := range docs {
-		out[i] = d.ID
-	}
-	return out
-}
-
-func goldDesc(spans []eval.Span) string {
+// goldDesc 把一题的 gold 印成 "doc[start,end)、doc[start,end)（n 段 / 并集 m 字）"。
+func goldDesc(c eval.TestCase) string {
 	var b strings.Builder
-	for i, s := range spans {
+	for i, g := range c.Gold {
 		if i > 0 {
 			b.WriteString("、")
 		}
-		fmt.Fprintf(&b, "%s[%d,%d)", s.Doc, s.Start, s.End)
+		fmt.Fprintf(&b, "%s[%d,%d)", g.Doc, g.Start, g.End)
 	}
-	fmt.Fprintf(&b, "（%d 段 / 并集 %d 字）", len(spans), eval.UnionLen(spans))
+	fmt.Fprintf(&b, "（%d 段 / 并集 %d 字）", len(c.Gold), c.GoldChars())
 	return b.String()
 }
