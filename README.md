@@ -207,6 +207,7 @@ cmd/sections/     标注工具：节区间清单（-find 定位引文；-emit �
 cmd/sim/          相似度自检：三句话验证 Cosine 方向是否正确
 cmd/smoke/        API 冒烟测试：embedding + chat 连通性
 corpus/           语料：17 篇中文公开文档，来源与许可见 corpus/SOURCES.md
+docs/             教案：RAG培训教案.md（按真实开发流程写的培训材料：每阶段的问题 → 方法 → 代码 → 验收）
 eval/             评测数据：testset.spec.txt（人读标注源）+ testset.json（编译产物，含源文档区间）
 internal/config/  环境配置加载（.env / 环境变量）
 internal/eval/    评测：测试集加载（区间 gold）+ CoverageAtK（区间并集求交）+ recall@k/RR（库函数）
